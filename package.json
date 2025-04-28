@@ -1,15 +1,15 @@
 {
-  "name": "minecraft-bot-g",
+  "name": "minecraft-bot",
   "version": "1.0.0",
-  "description": "Den sygeste Minecraft bot på MosedeGernik serveren 🔥",
+  "description": "Bot der cringer servere",
   "main": "bot.js",
   "scripts": {
     "start": "node bot.js"
   },
   "dependencies": {
-    "mineflayer": "^5.6.0",
-    "mineflayer-pathfinder": "^2.3.0",
-    "express": "^4.18.2",
-    "vec3": "^0.1.7"
+    "mineflayer": "^4.16.0",
+    "mineflayer-pathfinder": "^2.5.2",
+    "vec3": "^0.1.7",
+    "express": "^4.18.2"
   }
 }
