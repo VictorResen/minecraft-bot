@@ -1,74 +1,45 @@
-import pkgBot from 'mineflayer';
-const { createBot } = pkgBot;
+const mineflayer = require('mineflayer')
+const { pathfinder, Movements, goals } = require('mineflayer-pathfinder')
+const mcDataLoader = require('minecraft-data')
 
-import pkg from 'mineflayer-pathfinder';
-const { pathfinder, Movements, goals } = pkg;
+// Opretter botten
+const bot = mineflayer.createBot({
+  host: 'MosedeGernik.aternos.me', // DIN SERVER URL
+  username: 'dinbotnavn' // ÆNDRE BOT NAVN HER
+})
 
-import { Vec3 } from 'vec3'; // Til position preview
-
-import express from 'express';
-const app = express();
-
-const bot = createBot({ 
-  host: 'MosedeGernik.aternos.me',
-  port: 25565,
-  username: '!PreviewBot', 
-});
-
-bot.loadPlugin(pathfinder);
-
+// Vent på, at botten er spawnet
 bot.once('spawn', () => {
-  console.log('✅ Bot is online og klar til ballade!');
+  // Henter den rigtige mcData baseret på versionen
+  const mcData = mcDataLoader(bot.version)
+  
+  // Loader pathfinder plugin
+  bot.loadPlugin(pathfinder)
 
-  // Lav "preview" — viser hvor botten står
-  setInterval(() => {
-    const pos = bot.entity.position;
-    console.log(`📍 Bot Position: X=${pos.x.toFixed(2)} Y=${pos.y.toFixed(2)} Z=${pos.z.toFixed(2)}`);
-  }, 5000); // Hver 5. sekund
-});
+  // Skaber movement data baseret på mcData
+  const defaultMove = new Movements(bot, mcData)
+  bot.pathfinder.setMovements(defaultMove)
 
-bot.on('chat', (username, message) => {
-  if (username === bot.username) return; // Gider ikke snakke med sig selv
-
-  if (message === '!pos') {
-    const pos = bot.entity.position;
-    bot.chat(`Yo ${username}, jeg står her: X=${Math.floor(pos.x)}, Y=${Math.floor(pos.y)}, Z=${Math.floor(pos.z)} 📍`);
+  console.log("✅ Bot er klar G!")
+  
+  // Eksempel på, at botten følger en spiller (eller andet mål)
+  const target = bot.players['somePlayer'] // Skift 'somePlayer' med navnet på en spiller
+  if (target) {
+    bot.pathfinder.setGoal(new goals.GoalFollow(target.entity, 1)) // Følg spilleren med 1 blok afstand
   }
+})
 
-  if (message.startsWith('!goto ')) {
-    const args = message.split(' ');
-    if (args.length !== 4) {
-      bot.chat('Bro skriv det rigtigt: !goto <x> <y> <z> 😤');
-      return;
-    }
-    const [x, y, z] = args.slice(1).map(Number);
-    if (isNaN(x) || isNaN(y) || isNaN(z)) {
-      bot.chat('Bro, tal skal være tal... du er cooked 😂');
-      return;
-    }
-
-    const goal = new goals.GoalBlock(x, y, z);
-    const defaultMove = new Movements(bot);
-    bot.pathfinder.setMovements(defaultMove);
-    bot.pathfinder.setGoal(goal);
-    bot.chat(`Alright G, på vej til ${x} ${y} ${z} 🚶‍♂️💨`);
-  }
-});
-
-bot.on('error', (err) => {
-  console.log('💥 Fejl:', err);
-});
-
+// Hvis botten mister forbindelse til serveren
 bot.on('end', () => {
-  console.log('😵‍💫 Botten blev kicked... prøver igen om 10 sek.');
-  setTimeout(() => bot.connect(), 10000);
-});
+  console.log('Bot lost connection!')
+})
 
-app.get('/', (req, res) => {
-  res.send('🚀 Botten kører G! Alt er fire!');
-});
+// Hvis der er en fejl med botten
+bot.on('error', (err) => {
+  console.log('Bot encountered an error:', err)
+})
 
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-  console.log(`🌐 Webserver online på port ${PORT}`);
-});
+// Når botten er offline (disconnectet)
+bot.on('offline', () => {
+  console.log('Bot is offline!')
+})
